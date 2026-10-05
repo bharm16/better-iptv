@@ -18,6 +18,8 @@ The repository currently contains the product specification, research, architect
 - [Product scope and decisions](.scratch/product-discovery/spec.md)
 - [Discovery map](.scratch/product-discovery/map.md)
 - [First native TV build](.scratch/first-tv-build/spec.md)
+- [First-build interaction contract](.scratch/first-tv-build/interaction-contract.md)
+- [UX architecture board](https://www.figma.com/board/JluDgNpnfYoTbMeOkq5mE7)
 - [First-build tickets and dependencies](.scratch/first-tv-build/map.md)
 - [Approved ticket breakdown](.scratch/first-tv-build/ticket-breakdown.md)
 - [Domain glossary](CONTEXT.md)

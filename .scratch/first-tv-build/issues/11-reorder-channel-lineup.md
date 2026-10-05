@@ -8,9 +8,10 @@
 
 **Type:** task
 
-- [ ] Group and channel reordering can be performed without touch or drag-only gestures, with clear move, finish, and cancel behavior.
-- [ ] Saved order is provider-scoped and consistently applied to relevant browsing lists; Recents retains its chronological meaning.
+- [ ] Guide → Organize → Groups/Channels → Move enters a visible draft move mode; the D-pad moves the item, Finish commits, and Cancel/Back discards the draft without needing touch or drag gestures.
+- [ ] Provider-scoped group/channel order is projected into Guide, All/Ungrouped, Favorites, favorite-browser sections and channel-name search; Recents and recent-browser sections remain chronological.
 - [ ] Cancel leaves the saved order unchanged; confirmed changes survive app restart and provider refresh.
-- [ ] New channels have a deterministic documented placement without resetting existing personal order, and removed channels do not corrupt remaining positions.
+- [ ] New groups/channels append in provider order without resetting saved order; stable removed identities do not corrupt surviving positions.
+- [ ] Catalog updates are queued during a draft move and reconciled after Finish/Cancel. If the moving item disappears, discard that draft with feedback and restore a surviving item/control; never reshuffle items underneath active move focus.
 - [ ] Reordering keeps a meaningful focused item and does not alter or interrupt the active stream.
 - [ ] Tests cover moves, cancellation, refresh additions/removals, persistence, and provider separation.

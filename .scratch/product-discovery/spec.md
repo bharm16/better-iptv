@@ -4,6 +4,8 @@ Status: needs-info
 
 Working record of the product interview. This is not an approved implementation spec.
 
+The [approved first-build scope](../first-tv-build/spec.md) and [interaction contract](../first-tv-build/interaction-contract.md) now define the initial implementation behavior, including subsequent architecture-review refinements. Open questions below reflect interview history; resolved first-build behavior is recorded in those current documents.
+
 ## Confirmed direction
 
 - Build a better IPTV / Xtream Codes app, starting with Android TV.
