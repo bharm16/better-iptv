@@ -1,0 +1,39 @@
+# Playback engine comparison: Media3 and LibVLC
+
+Researched 2026-10-04 against the latest discovery spec: Google/Android TV first, Android-based Fire OS next, live Xtream Codes channels, available stream controls, no dedicated time-shift buffer or DVR. No provider streams, credentials, builds, or devices were tested.
+
+**Recommendation — engineering judgment:** use current stable Media3/ExoPlayer as the first engine. It fits the Android playback/session model and documented live-stream requirements. Keep LibVLC as a candidate for demonstrated compatibility gaps. The native UI choice alone does not improve decoding; another UI framework can wrap the same underlying engine.
+
+## Formats and decoding
+
+Media3 supports HLS with MPEG-TS or fragmented MP4/CMAF, progressive MPEG-TS, and DASH with supported demuxed containers. MPEG-TS inside DASH is explicitly unsupported. Protocol, container, and codec are separate questions: a playable TS container does not establish that its video profile or audio codec can be decoded. ExoPlayer normally uses Android platform decoders, making device capability material. [Media3 format matrix](https://developer.android.com/media/media3/exoplayer/supported-formats)
+
+Media3's RTSP module documents H.264, AAC, and AC3 with UDP unicast or interleaved TCP; multicast is unsupported in that module. VLC documents broader UDP/RTP inputs, including multicast, and its core contains HLS/DASH handling. These are possible differentiators only if required channels actually use them; Xtream connection support alone does not establish the delivered format. [Media3 RTSP](https://developer.android.com/media/media3/exoplayer/rtsp), [VLC inputs](https://images.videolan.org/vlc/features.html), [VLC adaptive-streaming source](https://github.com/videolan/vlc-3.0/blob/master/modules/demux/adaptive/adaptive.cpp)
+
+LibVLC is a credible alternative when software decoding solves a required codec gap: VLC Android supports both hardware and software video decoding, with hardware availability dependent on the device. Media3 also supports optional decoder extensions, but its official FFmpeg extension is **audio only** and requires a separate build. An audio-only gap may therefore justify one targeted decoder before a complete second engine. [VLC Android](https://images.videolan.org/vlc/download-android.html), [Media3 decoder extensions](https://developer.android.com/media/media3/exoplayer/demo-application#enabling-bundled-decoders)
+
+Some apparent Media3 incompatibilities have documented remedies: TS without expected frame delimiters/keyframes, unadvertised captions, or HLS URLs without recognizable extensions can require extractor or source configuration. Investigate those before declaring an engine failure; the TS workarounds also have CPU or visual-corruption tradeoffs. [Media3 troubleshooting](https://developer.android.com/media/media3/exoplayer/troubleshooting)
+
+## Controls, tracks, and integration
+
+Media3 exposes live-window seeking and documents expiry of paused positions. LibVLC separately exposes pause/seek capability queries and states that seeking depends on the format/protocol. Neither API is evidence of guaranteed rewind for arbitrary live inputs. Both can fit the accepted capability-based controls policy. [Media3 live playback](https://developer.android.com/media/media3/exoplayer/live-streaming), [LibVLC player API](https://github.com/videolan/vlc-3.0/blob/master/include/vlc/libvlc_media_player.h)
+
+Media3 supplies error callbacks with playback, renderer, and HTTP details, plus documented retry entry points. Its MediaSession automatically reflects Player state and routes external controls, including TV remote commands. **Inference:** choosing LibVLC requires additional state/command integration for the same Media3 session contract; it does not remove lifecycle or recovery design. [Player events](https://developer.android.com/media/media3/exoplayer/listening-to-player-events), [MediaSession integration](https://developer.android.com/media/media3/session/control-playback)
+
+Both support selectable audio/subtitle tracks. Media3 provides language preferences and explicit track overrides; preferences can survive media changes, whereas an exact track override may not apply to the next channel. VLC Android documents multiple audio/subtitle tracks and embedded/external subtitles. Actual caption detection and rendering still require representative streams. [Media3 track selection](https://developer.android.com/media/media3/exoplayer/track-selection), [VLC Android features](https://images.videolan.org/vlc/download-android.html)
+
+**Recommended lifecycle:** keep one active playback owner while browsing the lineup and replace its media when a channel is selected. A large catalog does not justify a decoder per channel. Media3 explicitly requires releasing unused players to free limited decoders; LibVLC's API likewise provides media replacement and release. Measure rapid switching, stale callbacks, decoder recovery, and background/foreground transitions. Neither source proves faster channel changes. [Media3 lifecycle](https://developer.android.com/media/media3/exoplayer/hello-world), [LibVLC lifecycle](https://github.com/videolan/vlc-3.0/blob/master/include/vlc/libvlc_media_player.h)
+
+## Fire OS and maintenance
+
+Amazon documents compatibility for players using Android media APIs. Its media-player page still recommends the older Amazon ExoPlayer port and is dated October 2023. However, Amazon also publishes a **Media3 port**, whose default branch is based on 1.3.1 and explicitly describes Fire TV compatibility. This is positive platform evidence, not a guarantee for every current upstream release or model. The checked repositories do not redirect users to LibVLC. Start qualification with current upstream Media3 rather than adopting an old fork solely from that page. [Amazon player guidance](https://developer.amazon.com/docs/fire-tv/media-players.html), [Amazon Media3 port](https://github.com/amzn/media3-external-port)
+
+Audio decoding and passthrough are distinct. Amazon's Dolby guidance requires detecting connected audio capabilities and handling endpoints without Dolby support, including Bluetooth transitions. Neither engine can make unsupported output hardware accept a bitstream. Test TV speakers, the intended HDMI/soundbar configuration, and headphones where supported. [Amazon Dolby guidance](https://developer.amazon.com/docs/fire-tv/dolby-integration-guidelines.html)
+
+Media3 lists stable 1.11.1, released September 10, 2026, with current playback/session fixes. VideoLAN announced VLC Android 3.7.0 in February 2026; its LibVLC page identifies core version 3 as stable and 4 as development. The Android app version is not the LibVLC artifact version. These establish ongoing projects, not comparative reliability. [Media3 releases](https://developer.android.com/jetpack/androidx/releases/media3), [VideoLAN news](https://images.videolan.org/news.html), [LibVLC status](https://images.videolan.org/vlc/libvlc.html)
+
+## What could change the recommendation
+
+Reconsider Media3 when a required stream remains unplayable after correct configuration, required captions/audio remain unavailable, or selected hardware misses agreed switching/stability targets—and a controlled LibVLC comparison resolves that failure. Include HLS and direct TS, encountered codecs/profiles/interlacing, track changes, short and expired pauses, network interruption, and repeated channel switches in qualification. Record startup delay, rebuffering, A/V sync, dropped frames, memory, and recovery. These are proposed validation criteria, not completed tests.
+
+No evidence currently justifies shipping two engines. Add a fallback only for a reproduced, important compatibility benefit that outweighs another set of controls, error handling, lifecycle behavior, and device tests.

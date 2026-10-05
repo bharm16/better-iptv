@@ -1,0 +1,33 @@
+# TV platform boundaries and code sharing
+
+Research date: 2026-10-04. Product-discovery evidence, not a platform or implementation decision. Android TV is first; other TVs and streaming boxes precede phones and desktop. Specific later targets remain open. This note covers Fire TV and Apple TV, not a complete survey of TV operating systems.
+
+## Fire TV contains two different development targets
+
+**Fire OS is Android-based.** Amazon describes Fire OS as an Android fork and directs developers to Android tools and APIs. Service integrations differ: Google services may need Amazon alternatives, and distribution uses the Amazon Appstore. Sharing an Android app with Fire OS is a documented path, but Amazon's wording is conditional, not a guarantee of compatibility. [Fire OS overview](https://developer.amazon.com/docs/fire-tv/fire-os-overview.html)
+
+**A Fire TV product name does not establish its OS.** Amazon's current device table lists the Fire TV Stick 4K Plus (2025) and 4K Max second generation (2023) as Fire OS 8, while the Fire TV Stick 4K Select (2025) and Stick HD (2026) run Vega OS. Its table also includes Fire OS televisions introduced in 2026. Do not assume every new Fire TV uses Vega, or every Fire TV remains Android. Identify model, generation, and OS before defining support. [Amazon's device/OS table](https://developer.amazon.com/docs/fire-tv/fire-os-overview.html#fire-os-versions)
+
+**Vega has a separate app runtime and binary.** Amazon describes Vega as Linux-based. Vega apps are submitted as VPKG binaries, while Fire OS APKs have their own versioning. Both can share an Amazon Appstore listing; that does not make the binaries interchangeable. [Amazon's July 2026 Vega introduction](https://developer.amazon.com/apps-and-games/blogs/2026/07/guide-to-building-for-fire-tv-on-vega-os), [Vega submission and binary versioning](https://developer.amazon.com/docs/vega/0.24/app-submission)
+
+Amazon's React Native for Vega is an out-of-tree implementation running on Vega's native UI framework. Its React Native runtime ships in the OS and is dynamically linked with apps. It incorporates TV focus APIs, but this is an Amazon-specific platform implementation. **Inference:** Android UI/player dependencies cannot be assumed to become Vega-compatible by changing the build target. [Vega architecture](https://developer.amazon.com/docs/vega/0.24/vega-rn-arch)
+
+## Apple TV is a tvOS target
+
+Apple's development path uses Xcode and the tvOS SDK for Apple TV. Apple documents SwiftUI and UIKit for interfaces, with AVPlayer and AVKit for media playback and presentation. This is a separate platform integration, even when application logic is shared. Its SDK capabilities do not establish that a particular provider stream, codec combination, or live-window behavior works in this app. [tvOS getting started](https://developer.apple.com/tvos/get-started/), [Apple's tvOS frameworks](https://developer.apple.com/tvos/)
+
+## What can realistically be shared
+
+**Native Android UI/player with shared domain logic is a viable architecture candidate.** Google supplies Compose for TV components with TV focus and remote behavior, and Media3 supplies the ExoPlayer implementation of its playback interface. Kotlin Multiplatform allows shared logic with platform-specific implementations behind common interfaces. **Design inference:** provider/catalog rules, favorite-channel identity, lineup organization, and recent-channel rules could be shared while UI, playback, storage, and credentials use platform adapters. This is a possible boundary, not a chosen stack or a measured reuse percentage. [Compose for TV](https://developer.android.com/training/tv/playback/compose), [Media3 ExoPlayer](https://developer.android.com/media/media3/exoplayer), [Kotlin Multiplatform FAQ](https://kotlinlang.org/docs/multiplatform/faq.html)
+
+**Kotlin support for tvOS is not Compose UI support for tvOS.** Kotlin's official platform table marks core tvOS support Beta. Kotlin/Native lists `tvosArm64` and `tvosSimulatorArm64` as Tier 2: regularly tested for compilation, with weaker execution/compatibility guarantees than Tier 1. These are compiler/code-sharing capabilities. The official Compose Multiplatform UI table lists Android, iOS, desktop, and web; it does not list tvOS. Consequently, plan any Kotlin/tvOS candidate around a separately verified tvOS interface, rather than assuming Android TV Compose screens carry over. Community UI ports would require their own dependency and maintenance assessment. [Kotlin platform stability](https://kotlinlang.org/docs/multiplatform/supported-platforms.html), [Kotlin/Native target support](https://kotlinlang.org/docs/native-target-support.html)
+
+**React Native TV offers shared UI/logic across maintained TV targets, through a community fork.** Apple TV and Android TV support lives in `react-native-tvos`, outside React Native core. Amazon's Fire OS documentation explicitly uses this fork and Android tooling. That supplies a candidate for Android TV, Fire OS, and tvOS, with device-specific focus, media integrations, and testing still required. [React Native TV project](https://github.com/react-native-tvos/react-native-tvos), [Amazon's Fire OS React Native guide](https://developer.amazon.com/docs/fire-tv/get-started-with-react-native.html)
+
+**Vega remains a distinct React Native port.** Amazon says pure JavaScript/TypeScript libraries without platform dependencies can often transfer, while native Android/iOS implementations need Vega replacements or ports. Vega's media integration uses its W3C media API and supports adapted JavaScript players. Amazon's automated Fire OS migration is explicitly Beta; the native Java/Kotlin path rewrites the app into React Native for Vega. Neither migration tooling nor shared language proves this app's compatibility. [Vega library and player porting](https://developer.amazon.com/docs/vega-api/0.24/porting-libraries), [Fire OS-to-Vega migration](https://developer.amazon.com/docs/adbt/port-fire-os-app-to-vega)
+
+## Decisions this evidence should inform
+
+Ask which later TV ecosystem matters first, and whether “Fire TV support” must include both Fire OS and Vega devices. Then compare architecture candidates against those selected targets and physical test hardware. Code-sharing percentage should follow the required viewing behavior, not substitute for it.
+
+No app, stream, device, SDK build, or dependency combination was tested for this note. Playback reliability, navigation quality, store acceptance, and compatibility remain unproven. Documentation was checked on the research date; the cited Vega pages use SDK documentation version 0.24. Recheck target support and runtime versions when selecting actual dependencies.
